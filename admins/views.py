@@ -1,6 +1,8 @@
 from django.shortcuts import render
 
 # Create your views here.
+from users.models import User
+
 
 def index(request):
     context = {'tittle': 'GeekShop - Админ Панель'}
@@ -12,7 +14,10 @@ def admin_users_create(request):
     return render(request, 'admins/admin-users-create.html', context)
 
 def admin_users(request):
-    context = {'tittle': 'GeekShop - Пользователи'}
+    context = {
+        'tittle': 'GeekShop - Пользователи',
+        'users': User.objects.all(),
+        }
     return render(request, 'admins/admin-users-read.html', context)
 
 def admin_users_update(request):
