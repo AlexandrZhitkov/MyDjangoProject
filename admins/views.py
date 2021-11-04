@@ -1,14 +1,22 @@
 from django.shortcuts import render,HttpResponseRedirect
 from django.urls import reverse
 from django.contrib.auth.decorators import user_passes_test
+from django.views.generic.list import ListView
 # Create your views here.
 from users.models import User
 from admins.forms import UserAdminRegistrationForm, UserAdminProfileForm
+
+
 
 @user_passes_test(lambda u: u.is_staff)
 def index(request):
     context = {'tittle': 'GeekShop - Админ Панель'}
     return render(request, 'admins/index.html', context)
+
+class UserListView(ListView):
+    model = User
+    template_name = 'admins/admin-users-read.html'
+
 
 @user_passes_test(lambda u: u.is_staff)
 def admin_users_create(request):
