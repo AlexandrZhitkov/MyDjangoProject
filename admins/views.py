@@ -30,10 +30,23 @@ class UserUpdateViews(UpdateView):
     success_url = reverse_lazy('admins:admin_users')
     template_name = 'admins/admin-users-update-delete.html'
 
+    def get_context_data(self, **kwargs):
+        context = super(UserUpdateViews, self).get_context_data(**kwargs)
+        context['title'] = 'Админ-панель - Редактирование пользовтаеля'
+        return context
+
+
+
 class UserDeleteView(DeleteView):
     model = User
     template_name = 'admins/admin-users-update-delete.html'
     success_url = reverse_lazy('admins:admin_users')
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        success_url = self.get_success_url()
+        self.object.safe_delete()
+        return HttpResponseRedirect(success_url)
 
 
 
