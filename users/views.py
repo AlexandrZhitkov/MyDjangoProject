@@ -1,15 +1,16 @@
 from django.conf import settings
 from django.core.mail import send_mail, message
 from django.shortcuts import render, HttpResponseRedirect
-from django.contrib.auth.decorators import login_required
+from django.contrib import auth, messages
 from django.urls import reverse
-from django.contrib import auth
-from django.contrib import messages
+from .forms import UserLoginForm, UserRegistrationForm, UserProfileForm, UserProfileEditForm
+from baskets.models import Basket
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
+
+# Create your views here.
 from .models import User
 
-from users.forms import UserLoginForm, UserRegistrationForm, UserProfileForm
-from baskets.models import Basket
-# Create your views here.
 
 def login(request):
     if request.method == 'POST':
@@ -23,9 +24,13 @@ def login(request):
                 return HttpResponseRedirect(reverse('index'))
     else:
         form = UserLoginForm()
+    context = {
+        'title': 'GeekShop - Авторизация',
+        'form': form
+    }
 
-    context = {'tittle': 'GeekShop - Авторизация', 'form': form}
     return render(request, 'users/login.html', context)
+
 
 def registration(request):
     if request.method == 'POST':
@@ -45,23 +50,29 @@ def registration(request):
 
     return render(request, 'users/registration.html', context)
 
-@login_required
+
+@transaction.atomic
 def profile(request):
-    user = request.user
+    title = 'Профиль'
+
     if request.method == 'POST':
-        form = UserProfileForm(instance=user, files=request.FILES, data=request.POST)
-        if form.is_valid():
-            form.save()
+        edit_form = UserProfileForm(data=request.POST, files=request.FILES, instance=request.user)
+
+        profile_form = UserProfileEditForm(request.POST, instance=request.user.userprofile)
+
+        if edit_form.is_valid() and profile_form.is_valid():
+            edit_form.save()
             return HttpResponseRedirect(reverse('users:profile'))
     else:
-        form = UserProfileForm(instance=user)
+        edit_form = UserProfileForm(instance=request.user)
+        profile_form = UserProfileEditForm(instance=request.user.userprofile)
 
     context = {
-        'title': 'GeekShop - Профиль',
-        'form': form,
-        'baskets': Basket.objects.filter(user=user),
-
+        'title': title,
+        'edit_form': edit_form,
+        'profile_form': profile_form,
     }
+
     return render(request, 'users/profile.html', context)
 
 
@@ -69,12 +80,14 @@ def logout(request):
     auth.logout(request)
     return HttpResponseRedirect(reverse('index'))
 
+
 def send_verify_mail(user):
     verify_link = reverse('users:verify', args=[user.email, user.activation_key])
     title = f'Подтверждение учетной записи {user.username}'
     message = f'Для подтверждение учетной записи {user.username} на портале {settings.DOMAIN_NAME}' \
               f' перейдите по ссылке: {settings.DOMAIN_NAME}{verify_link}'
     return send_mail(title, message, settings.EMAIL_HOST_USER, [user.email], fail_silently=False)
+
 
 def verify(request, email, activation_key):
     context = {
@@ -84,7 +97,6 @@ def verify(request, email, activation_key):
     try:
         user = User.objects.get(email=email)
         if user.activation_key == activation_key and not user.is_activation_key_expired():
-            title = 'Подтверждение регистрации'
             user.is_active = True
             user.save()
             auth.login(request, user, backend='django.contrib.auth.backends.ModelBackend')
@@ -95,8 +107,3 @@ def verify(request, email, activation_key):
     except Exception as e:
         print(f'error activation user: {e.args}')
         return HttpResponseRedirect(reverse('index'))
-
-
-
-
-
