@@ -1,3 +1,1 @@
 MY PROJECT
-
-а
