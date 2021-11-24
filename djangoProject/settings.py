@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'baskets',
     'admins',
     'social_django',
+    'ordersapp',
+
 ]
 AUTHENTICATION_BACKENDS = (
       'django.contrib.auth.backends.ModelBackend',
@@ -60,6 +62,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'social_django.middleware.SocialAuthExceptionMiddleware'
 ]
 
 ROOT_URLCONF = 'djangoProject.urls'
@@ -76,6 +79,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'products.context_processors.basket',
+                'social_django.context_processors.backends',
+                'social_django.context_processors.login_redirect',
             ],
         },
     },
